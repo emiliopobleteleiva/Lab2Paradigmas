@@ -1,0 +1,204 @@
+%para RF01
+% entender y explicar cada RF previo a programar, para asi establecer
+% una lógica
+
+%TDAs planteados
+
+% Archivo: conecta4.pl
+
+% RF02 - TDA player
+% Constructor para crear un jugador con sus atributos
+% player(ID, Name, Color, Wins, Losses, Draws, RemainingPieces, Player)
+
+player(ID, Name, Color, Wins, Losses, Draws, RemainingPieces, [ID, Name, Color, Wins, Losses, Draws, RemainingPieces]).
+
+% RF03 - TDA piece
+% Constructor para crear una ficha con un color espec’fico
+% piece(Color, Piece)
+
+piece(Color, [Color]).
+
+% RF04 - TDA board
+% Constructor para crear un tablero vac’o de 7 columnas x 6 filas
+% board(Board)
+
+board(Board) :-
+    length(Row, 7),    % Cada fila tiene 7 columnas
+    maplist(=(empty), Row), % Inicializa todas las posiciones como vac’as
+    length(Board, 6),  % El tablero tiene 6 filas
+    maplist(=(Row), Board). % Repite la misma fila vac’a 6 veces
+
+% RF05 - Predicado "can_play"
+% Verifica si es posible realizar una jugada en el tablero (si hay espacios vac’os)
+
+% Caso base: si encontramos un "empty" en una fila, se puede jugar
+can_play([Row | _]) :-
+    member(empty, Row),
+    !.  % Cortamos aqu’ porque ya sabemos que se puede jugar
+
+% Caso recursivo: seguimos explorando las filas restantes
+can_play([_ | RestRows]) :-
+    can_play(RestRows).
+
+% Caso especial: tablero vac’o
+% No se puede jugar si el tablero es una lista vac’a (deber’a estar inicializado).
+can_play([]) :-
+    false.
+
+% RF06 - Predicado "play_piece"
+% Coloca una ficha en la posici—n m‡s baja disponible de una columna en el tablero.
+
+% Caso base: insertar una pieza en la columna seleccionada.
+% Si la fila actual est‡ vac’a (empty), colocamos la pieza en esa posici—n.
+insert_piece_in_column([empty | RestRows], Piece, [Piece | RestRows]).
+
+% Caso recursivo: si la fila actual ya est‡ ocupada, seguimos buscando en las filas superiores.
+insert_piece_in_column([Occupied | RestRows], Piece, [Occupied | NewRows]) :-
+    insert_piece_in_column(RestRows, Piece, NewRows).
+
+% Inserta una pieza en una columna espec’fica del tablero.
+% Caso base: estamos en la columna objetivo (’ndice = 0).
+play_piece_in_column([Col | OtherCols], 0, Piece, [NewCol | OtherCols]) :-
+    insert_piece_in_column(Col, Piece, NewCol).
+
+% Caso recursivo: buscamos la columna objetivo decrementando el ’ndice.
+play_piece_in_column([Col | OtherCols], ColIndex, Piece, [Col | NewCols]) :-
+    ColIndex > 0,
+    NextColIndex is ColIndex - 1,
+    play_piece_in_column(OtherCols, NextColIndex, Piece, NewCols).
+
+% Predicado principal: Coloca una pieza en el tablero en una columna espec’fica.
+play_piece(Board, ColIndex, Piece, NewBoard) :-
+    % Transponemos el tablero para trabajar por columnas.
+    transpose(Board, TransposedBoard),
+    % Modificamos la columna objetivo en el tablero transpuesto.
+    play_piece_in_column(TransposedBoard, ColIndex, Piece, NewTransposedBoard),
+    % Transponemos de nuevo para restaurar la estructura original del tablero.
+    transpose(NewTransposedBoard, NewBoard).
+
+% RF07
+% TDA board - predicado "check_vertical_win"
+% desc: verificar si existe una victoria vertical (4 fichas consecutivas del mismo color en una columna)
+% imp: resuelve de forma recursiva, explorando cada columna en el tablero
+% dom:
+% - board: estado actual del tablero
+% - winner: 1 si gana el jugador 1, 2 si gana el jugador 2, 0 si no hay ganador vertical
+% ej: check_vertical_win(CurrentBoard, Winner).
+
+% RF08
+% TDA board - predicado "check_horizontal_win"
+% desc: verificar si existe una victoria horizontal (4 fichas consecutivas del mismo color en una fila)
+% imp: resuelve de forma recursiva, explorando cada fila en el tablero
+% dom:
+% - board: estado actual del tablero
+% - winner: 1 si gana el jugador 1, 2 si gana el jugador 2, 0 si no hay ganador horizontal
+% ej: check_horizontal_win(CurrentBoard, Winner).
+
+% RF09
+% TDA board - predicado "check_diagonal_win"
+% desc: verificar si existe una victoria diagonal (4 fichas consecutivas del mismo color en cualquier diagonal)
+% imp: usa recursión para explorar las diagonales ascendentes y descendentes
+% dom:
+% - board: estado actual del tablero
+% - winner: 1 si gana el jugador 1, 2 si gana el jugador 2, 0 si no hay ganador diagonal
+% ej: check_diagonal_win(CurrentBoard, Winner).
+
+% RF10
+% TDA board - predicado "who_is_winner"
+% desc: determinar si existe un ganador en el tablero, evaluando victoria vertical, horizontal o diagonal
+% imp: usa los predicados de verificación vertical, horizontal y diagonal para identificar un ganador
+% dom:
+% - board: estado actual del tablero
+% - winner: 1 si gana el jugador 1, 2 si gana el jugador 2, 0 si no hay ganador
+% ej: who_is_winner(Board, Winner).
+
+% RF11
+% TDA game - predicado "game"
+% desc: constructor que crea una nueva partida de Conecta4
+% imp: usa estructuras basadas en listas para almacenar los datos de los jugadores, el tablero, y el turno actual
+% dom:
+% - player1: representación del primer jugador (TDA player)
+% - player2: representación del segundo jugador (TDA player)
+% - board: estado inicial del tablero (vacío)
+% - currentTurn: turno actual (1 para el jugador 1, 2 para el jugador 2)
+% ej: game(Player1, Player2, EmptyBoard, 1, Game).
+
+% RF12
+% TDA game - predicado "game_history"
+% desc: genera un historial de los movimientos realizados en la partida
+% imp: almacena los movimientos a medida que avanzan en el juego
+% dom:
+% - game: estado actual del juego (TDA game)
+% - currentHistory: historial de movimientos actuales
+% ej: game_history(Game, CurrentHistory).
+
+% RF13
+% TDA game - predicado "is_draw"
+% desc: verifica si el juego actual ha terminado en empate
+% imp: comprueba si el tablero está lleno o si ambos jugadores no tienen más fichas
+% dom:
+% - game: estado actual del juego (TDA game)
+% - resultado: #t si es empate, #f si no
+% ej: is_draw(Game).
+
+% RF14
+% TDA player - predicado "update_stats"
+% desc: actualiza las estadísticas del jugador (victorias, derrotas o empates) después de una partida
+% imp: modifica el TDA player con nuevas estadísticas
+% dom:
+% - game: estado actual del juego (TDA game)
+% - oldStats: estadísticas previas del jugador
+% - newStats: nuevas estadísticas del jugador
+% ej: update_stats(Game, OldStats, NewStats).
+
+% RF15
+% TDA game - predicado "get_current_player"
+% desc: obtiene el jugador cuyo turno está en curso
+% imp: accede al atributo de turno en el TDA game
+% dom:
+% - game: estado actual del juego (TDA game)
+% - currentPlayer: jugador actual (TDA player)
+% ej: get_current_player(Game, CurrentPlayer).
+
+% RF16
+% TDA game - predicado "game_get_board"
+% desc: obtiene el estado actual del tablero en el juego
+% imp: accede al tablero dentro del TDA game
+% dom:
+% - game: estado actual del juego (TDA game)
+% - currentBoard: estado actual del tablero
+% ej: game_get_board(Game, CurrentBoard).
+
+% RF17
+% TDA game - predicado "end_game"
+% desc: finaliza el juego y actualiza las estadísticas de los jugadores según el resultado
+% imp: usa el TDA game para actualizar las estadísticas de los jugadores
+% dom:
+% - game: estado actual del juego (TDA game)
+% - endGame: estado final del juego con estadísticas actualizadas
+% ej: end_game(Game, EndGame).
+
+% RF18
+% TDA game - predicado "player_play"
+% desc: realiza un movimiento en el juego
+% imp: verifica que sea el turno correcto, coloca la ficha en el tablero, cambia el turno, actualiza el historial, y revisa el estado del juego
+% dom:
+% - game: estado actual del juego (TDA game)
+% - player: jugador que realiza el movimiento
+% - column: columna donde se coloca la ficha
+% - newGame: nuevo estado del juego después del movimiento
+% ej: player_play(Game, Player, Column, NewGame).
+
+
+%test
+
+% Crear jugadores
+player(1, "Juan", "red", 0, 0, 0, 21, Player1).
+player(2, "Mauricio", "yellow", 0, 0, 0, 21, Player2).
+
+% Crear fichas
+piece("red", RedPiece).
+piece("yellow", YellowPiece).
+
+% Crear tablero vac’o
+board(EmptyBoard).
