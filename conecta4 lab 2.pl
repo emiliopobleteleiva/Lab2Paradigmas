@@ -15,6 +15,7 @@ piece(Color, [Color]).
 
 % RF04 - TDA Board
 % Constructor para crear un tablero vacío de 7 columnas x 6 filas
+
 % board(Board)
 board(Board) :-
     length(Row, 7),    % Cada fila tiene 7 columnas
@@ -23,6 +24,7 @@ board(Board) :-
     maplist(=(Row), Board). % Repite la misma fila vacía 6 veces
 
 % Imprime cada fila del tablero separada por un salto de línea
+
 print_board([]).  % Caso base: no quedan filas
 print_board([Row | Rest]) :-
     writeln(Row), % Imprime la fila actual
@@ -37,6 +39,7 @@ can_play(Board) :-
 % RF06 - Predicado "play_piece"
 % Coloca una ficha en la posición más baja disponible de una columna en el tablero
 % Caso base: Si la posición actual está vacía y es la última fila (más baja disponible), coloca la ficha.
+
 insert_piece_in_column([empty | Rest], Piece, [Piece | Rest]) :-
     \+ member(empty, Rest).  % Asegúrate de que no haya más posiciones vacías debajo.
 
@@ -69,45 +72,48 @@ transpose_aux([_ | Rs], Rows, [Col | Cs]) :-
 
 tail([_|T], T).
 
+%RF07
+% check_vertical(Board, PlayerPiece, State)
+% Board: Tablero (en formato de filas)
+% PlayerPiece: Pieza del jugador que estamos verificando
+% State: Resultado (win si se encuentran 4 consecutivas, fail en caso contrario)
+
+check_vertical(Board, PlayerPiece, win) :-
+    transpose(Board, TransposedBoard),    % Convertimos columnas en filas
+    member(Column, TransposedBoard),     % Iteramos sobre cada columna
+    consecutive_four(Column, PlayerPiece). % Verificamos si hay 4 consecutivas.
+
+check_vertical(_, _, fail).               % Si no encontramos, devolvemos "fail".
+
+% consecutive_four(List, PlayerPiece)
+% Verifica si hay 4 elementos consecutivos iguales a PlayerPiece
+consecutive_four(List, PlayerPiece) :-
+    append(_, [PlayerPiece, PlayerPiece, PlayerPiece, PlayerPiece | _], List).
+
+%RF08
+% check_horizontal(Board, PlayerPiece, State)
+% Board: Tablero (en formato de filas)
+% PlayerPiece: Pieza del jugador que estamos verificando
+% State: Resultado (win si se encuentran 4 consecutivas, fail en caso contrario)
+
+check_horizontal(Board, PlayerPiece, win) :-
+    member(Row, Board),              % Iteramos sobre cada fila
+    consecutive_four(Row, PlayerPiece). % Verificamos si hay 4 consecutivas.
+
+check_horizontal(_, _, fail).         % Si no encontramos, devolvemos "fail".
+
 % --- Tests ---
-% Crear jugadores
-test_players :-
-    player(1, "Juan", "red", 0, 0, 0, 21, Player1),
-    player(2, "Mauricio", "yellow", 0, 0, 0, 21, Player2),
-    writeln(Player1),
-    writeln(Player2).
 
-% Crear fichas
-test_pieces :-
-    piece("red", RedPiece),
-    piece("yellow", YellowPiece),
-    writeln(RedPiece),
-    writeln(YellowPiece).
+test_check_horizontal :-
+    board(Board),                      % Crear un tablero vacío
+    piece("red", RedPiece),            % Crear una ficha roja
+    play_piece(Board, 0, RedPiece, NewBoard1), % Primer movimiento en columna 0
+    play_piece(NewBoard1, 1, RedPiece, NewBoard2), % Segundo movimiento en columna 1
+    play_piece(NewBoard2, 2, RedPiece, NewBoard3), % Tercer movimiento en columna 2
+    play_piece(NewBoard3, 3, RedPiece, NewBoard4), % Cuarto movimiento en columna 3
+    print_board(NewBoard4),            % Imprimir el tablero actualizado
+    ( check_horizontal(NewBoard4, RedPiece, win) ->
+        writeln('¡Victoria horizontal detectada!')
+    ;   writeln('No hay victoria horizontal.')
+    ).
 
-% Crear tablero vacío
-test_board :-
-    board(EmptyBoard),
-    print_board(EmptyBoard). % Usamos el nuevo predicado
-
-% Verificar si se puede jugar
-test_can_play :-
-    board(Board),
-    can_play(Board),
-    writeln('Se puede jugar en el tablero vacío.').
-
-% Colocar ficha
-test_play_piece :-
-    board(Board),
-    piece("red", RedPiece),
-    play_piece(Board, 3, RedPiece, NewBoard),
-    play_piece(Board, 2, RedPiece, NewBoard),
-    play_piece(Board, 2, RedPiece, NewBoard),
-    print_board(NewBoard). % Usamos el nuevo predicado
-
-% Ejecutar todos los tests
-run_tests :-
-    test_players,
-    test_pieces,
-    test_board,
-    test_can_play,
-    test_play_piece.

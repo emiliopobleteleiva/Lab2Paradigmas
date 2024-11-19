@@ -164,3 +164,6 @@
 % - column: columna donde se coloca la ficha
 % - newGame: nuevo estado del juego después del movimiento
 % ej: player_play(Game, Player, Column, NewGame).
+
+%%%%%%%
+
