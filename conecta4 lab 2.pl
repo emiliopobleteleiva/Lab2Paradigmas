@@ -102,18 +102,47 @@ check_horizontal(Board, PlayerPiece, win) :-
 
 check_horizontal(_, _, fail).         % Si no encontramos, devolvemos "fail".
 
-% --- Tests ---
+% RF10 - who_is_winner/2
+% Verifica si hay un ganador en el tablero actual.
+% Entrada: Board (tablero actual)
+% Salida: Winner (1 si gana jugador 1, 2 si gana jugador 2, 0 si no hay ganador)
 
-test_check_horizontal :-
-    board(Board),                      % Crear un tablero vacío
-    piece("red", RedPiece),            % Crear una ficha roja
-    play_piece(Board, 0, RedPiece, NewBoard1), % Primer movimiento en columna 0
-    play_piece(NewBoard1, 1, RedPiece, NewBoard2), % Segundo movimiento en columna 1
-    play_piece(NewBoard2, 2, RedPiece, NewBoard3), % Tercer movimiento en columna 2
-    play_piece(NewBoard3, 3, RedPiece, NewBoard4), % Cuarto movimiento en columna 3
-    print_board(NewBoard4),            % Imprimir el tablero actualizado
-    ( check_horizontal(NewBoard4, RedPiece, win) ->
-        writeln('¡Victoria horizontal detectada!')
-    ;   writeln('No hay victoria horizontal.')
+who_is_winner(Board, Winner) :-
+    % Verificar si el jugador 1 tiene victoria
+    (   piece("red", Player1Piece),
+        (   check_vertical(Board, Player1Piece, win)
+        ;   check_horizontal(Board, Player1Piece, win)
+        ;   check_diagonal(Board, Player1Piece, win)
+        ) -> Winner = 1
+    ;   % Verificar si el jugador 2 tiene victoria
+        piece("yellow", Player2Piece),
+        (   check_vertical(Board, Player2Piece, win)
+        ;   check_horizontal(Board, Player2Piece, win)
+        ;   check_diagonal(Board, Player2Piece, win)
+        ) -> Winner = 2
+    ;   % Si no hay victorias
+        Winner = 0
     ).
+
+% RF11 - Crear una nueva partida
+% game(Player1, Player2, Board, CurrentTurn, Game)
+% Player1: Información del jugador 1
+% Player2: Información del jugador 2
+% Board: Tablero vacío inicial
+% CurrentTurn: Turno inicial (1 para jugador 1, 2 para jugador 2)
+% Game: Estructura resultante que contiene el estado inicial del juego
+
+game(Player1, Player2, Board, CurrentTurn, [Player1, Player2, Board, CurrentTurn]).
+
+% RF12 - Generar historial de movimientos de una partida
+% game_history(Game, History)
+% Entrada:
+%   Game: Estado del juego que contiene el historial
+% Salida:
+%   History: Lista de movimientos realizados
+
+game_history([_, _, _, _, History], History).
+
+
+% --- Tests ---
 
