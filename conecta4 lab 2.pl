@@ -102,6 +102,46 @@ check_horizontal(Board, PlayerPiece, win) :-
 
 check_horizontal(_, _, fail).         % Si no encontramos, devolvemos "fail".
 
+% RF09 - check_diagonal(Board, PlayerPiece, State)
+% Verifica si hay una victoria en las diagonales (ascendentes o descendentes)
+% Entrada:
+%   Board: Tablero (en formato de filas)
+%   PlayerPiece: Pieza del jugador
+%   State: Resultado (win si se encuentran 4 consecutivas, fail en caso contrario)
+
+% Caso diagonal ascendente
+check_diagonal(Board, PlayerPiece, win) :-
+    findall(Diagonal, diagonal_ascending(Board, Diagonal), Diagonals),
+    member(Diagonal, Diagonals),
+    consecutive_four(Diagonal, PlayerPiece).
+
+% Caso diagonal descendente
+check_diagonal(Board, PlayerPiece, win) :-
+    findall(Diagonal, diagonal_descending(Board, Diagonal), Diagonals),
+    member(Diagonal, Diagonals),
+    consecutive_four(Diagonal, PlayerPiece).
+
+% Si no se encuentra victoria
+check_diagonal(_, _, fail).
+
+% Generar diagonales ascendentes
+diagonal_ascending(Board, Diagonal) :-
+    append(_, [Row1, Row2, Row3, Row4 | _], Board),
+    nth1(Col, Row1, P1),
+    ColNext1 is Col + 1, nth1(ColNext1, Row2, P2),
+    ColNext2 is Col + 2, nth1(ColNext2, Row3, P3),
+    ColNext3 is Col + 3, nth1(ColNext3, Row4, P4),
+    Diagonal = [P1, P2, P3, P4].
+
+% Generar diagonales descendentes
+diagonal_descending(Board, Diagonal) :-
+    append(_, [Row1, Row2, Row3, Row4 | _], Board),
+    nth1(Col, Row1, P1),
+    ColNext1 is Col - 1, nth1(ColNext1, Row2, P2),
+    ColNext2 is Col - 2, nth1(ColNext2, Row3, P3),
+    ColNext3 is Col - 3, nth1(ColNext3, Row4, P4),
+    Diagonal = [P1, P2, P3, P4].
+
 % RF10 - who_is_winner/2
 % Verifica si hay un ganador en el tablero actual.
 % Entrada: Board (tablero actual)
@@ -194,7 +234,22 @@ get_current_player([_, Player2, _, 2], Player2). % Si el turno actual es 2, devu
 %   Board: Tablero actual
 game_get_board([_, _, Board, _], Board).
 
+% RF17 - Finalizar el juego y actualizar estadísticas
+% Entrada:
+%   Game: Estado del juego actual
+% Salida:
+%   FinalGame: Estado del juego actualizado con estadísticas finales
 
+end_game(Game, FinalGame) :-
+    Game = [Player1, Player2, Board, _, _],
+    who_is_winner(Board, Winner),
+    (   Winner =:= 1 -> update_stats(Game, Player1, UpdatedPlayer1), FinalGame = [UpdatedPlayer1, Player2, Board, 0, []]
+    ;   Winner =:= 2 -> update_stats(Game, Player2, UpdatedPlayer2), FinalGame = [Player1, UpdatedPlayer2, Board, 0, []]
+    ;   is_draw(Game, Draw), Draw = true ->
+        update_stats(Game, Player1, UpdatedPlayer1),
+        update_stats(Game, Player2, UpdatedPlayer2),
+        FinalGame = [UpdatedPlayer1, UpdatedPlayer2, Board, 0, []]
+    ).
 
 % --- Tests ---
 
