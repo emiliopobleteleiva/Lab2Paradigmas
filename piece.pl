@@ -1,3 +1,4 @@
+% archivo 'piece.pl'
 
 % RF03 - TDA Piece
 % Constructor para crear una ficha con un color específico

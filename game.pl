@@ -1,18 +1,18 @@
-%archivo 'game.pl'
-
-:- use_module(board).
+% Archivo: game.pl
 
 :- module(game, [
-    who_is_winner/2,      % RF10 - Verifica si hay un ganador
-    game/5,               % RF11 - Crea una nueva partida
-    game_history/2,       % RF12 - Genera historial de movimientos
-    is_draw/2,            % RF13 - Verifica si el juego está en empate
-    update_stats/3,       % RF14 - Actualiza estadísticas del jugador
-    get_current_player/2, % RF15 - Obtiene el jugador cuyo turno está activo
-    game_get_board/2,     % RF16 - Obtiene el tablero actual
-    end_game/2,           % RF17 - Finaliza el juego
-    player_play/4         % RF18 - Realiza un movimiento
+    who_is_winner/2,
+    game/5,
+    game_history/2,
+    is_draw/2,
+    update_stats/3,
+    get_current_player/2,
+    game_get_board/2,
+    end_game/2,
+    player_play/4
 ]).
+
+:- use_module(board).
 
 % RF10 - who_is_winner/2
 % Verifica si hay un ganador en el tablero actual.
@@ -131,15 +131,14 @@ end_game(Game, FinalGame) :-
         FinalGame = [UpdatedPlayer1, UpdatedPlayer2, Board, 0, []]
     ).
 
-%RF18 player_play
-
+% RF18 - Realizar movimiento
 player_play([Player1, Player2, Board, CurrentTurn, History], Player, Column, [UpdatedPlayer1, UpdatedPlayer2, NewBoard, NewTurn, NewHistory]) :-
     % Verificar que sea el turno del jugador correcto
     ((CurrentTurn =:= 1, Player = Player1);
      (CurrentTurn =:= 2, Player = Player2)),
 
     % Obtener la pieza del jugador
-    Player = [_, _, Color, Wins, Losses, Draws, RemainingPieces],
+    Player = [_, _, Color, _, _, _, RemainingPieces],
     RemainingPieces > 0, % Verificar que el jugador tenga fichas
     piece(Color, Piece),
 
@@ -157,9 +156,11 @@ player_play([Player1, Player2, Board, CurrentTurn, History], Player, Column, [Up
 
     % Actualizar los jugadores
     (CurrentTurn =:= 1 ->
-        UpdatedPlayer1 = [Player1[1], Player1[2], Player1[3], Wins, Losses, Draws, UpdatedRemainingPieces],
+        Player1 = [_, _, Color1, _, _, _, _],
+        UpdatedPlayer1 = [_, _, Color1, _, _, _, UpdatedRemainingPieces],
         UpdatedPlayer2 = Player2
     ;
-        UpdatedPlayer2 = [Player2[1], Player2[2], Player2[3], Wins, Losses, Draws, UpdatedRemainingPieces],
+        Player2 = [_, _, Color2, _, _, _, _],
+        UpdatedPlayer2 = [_, _, Color2, _, _, _, UpdatedRemainingPieces],
         UpdatedPlayer1 = Player1
     ).

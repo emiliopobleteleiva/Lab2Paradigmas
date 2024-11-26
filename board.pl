@@ -1,7 +1,14 @@
 %archivo 'board.pl'
 
 %modulo de las funciones:
-:- module(board, [board/1, can_play/1, play_piece/4, print_board/1]).
+:- module(board, [board/1,
+          can_play/1,
+          play_piece/4,
+          print_board/1,
+          check_vertical/3,       % Verifica victorias verticales
+          check_horizontal/3,     % Verifica victorias horizontales
+          check_diagonal/3
+          ]).
 
 %funciones
 
@@ -64,3 +71,55 @@ print_board([]).  % Caso base: no quedan filas
 print_board([Row | Rest]) :-
     writeln(Row), % Imprime la fila actual
     print_board(Rest). % Llama recursivamente para las filas restantes
+
+% RF07 - Verificar victoria vertical
+check_vertical(Board, PlayerPiece, win) :-
+    transpose(Board, TransposedBoard),    % Convertimos columnas en filas
+    member(Column, TransposedBoard),     % Iteramos sobre cada columna
+    consecutive_four(Column, PlayerPiece). % Verificamos si hay 4 consecutivas.
+
+check_vertical(_, _, fail).               % Si no encontramos, devolvemos "fail".
+
+% RF08 - Verificar victoria horizontal
+check_horizontal(Board, PlayerPiece, win) :-
+    member(Row, Board),              % Iteramos sobre cada fila
+    consecutive_four(Row, PlayerPiece). % Verificamos si hay 4 consecutivas.
+
+check_horizontal(_, _, fail).         % Si no encontramos, devolvemos "fail".
+
+% RF09 - Verificar victoria diagonal
+check_diagonal(Board, PlayerPiece, win) :-
+    % Caso diagonal ascendente
+    findall(Diagonal, diagonal_ascending(Board, Diagonal), Diagonals),
+    member(Diagonal, Diagonals),
+    consecutive_four(Diagonal, PlayerPiece).
+
+check_diagonal(Board, PlayerPiece, win) :-
+    % Caso diagonal descendente
+    findall(Diagonal, diagonal_descending(Board, Diagonal), Diagonals),
+    member(Diagonal, Diagonals),
+    consecutive_four(Diagonal, PlayerPiece).
+
+check_diagonal(_, _, fail).
+
+% Auxiliar: Verifica si hay 4 consecutivos
+consecutive_four(List, PlayerPiece) :-
+    append(_, [PlayerPiece, PlayerPiece, PlayerPiece, PlayerPiece | _], List).
+
+% Auxiliar: Generar diagonales ascendentes
+diagonal_ascending(Board, Diagonal) :-
+    append(_, [Row1, Row2, Row3, Row4 | _], Board),
+    nth1(Col, Row1, P1),
+    ColNext1 is Col + 1, nth1(ColNext1, Row2, P2),
+    ColNext2 is Col + 2, nth1(ColNext2, Row3, P3),
+    ColNext3 is Col + 3, nth1(ColNext3, Row4, P4),
+    Diagonal = [P1, P2, P3, P4].
+
+% Auxiliar: Generar diagonales descendentes
+diagonal_descending(Board, Diagonal) :-
+    append(_, [Row1, Row2, Row3, Row4 | _], Board),
+    nth1(Col, Row1, P1),
+    ColNext1 is Col - 1, nth1(ColNext1, Row2, P2),
+    ColNext2 is Col - 2, nth1(ColNext2, Row3, P3),
+    ColNext3 is Col - 3, nth1(ColNext3, Row4, P4),
+    Diagonal = [P1, P2, P3, P4].
