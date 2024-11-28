@@ -36,6 +36,7 @@ who_is_winner(Board, Winner) :-
         Winner = 0
     ).
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % RF11 - Crear una nueva partida
 % game(Player1, Player2, Board, CurrentTurn, Game)
@@ -47,6 +48,8 @@ who_is_winner(Board, Winner) :-
 
 game(Player1, Player2, Board, CurrentTurn, [Player1, Player2, Board, CurrentTurn, []]).
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % RF12 - Generar historial de movimientos de una partida
 % game_history(Game, History)
 % Entrada:
@@ -56,6 +59,8 @@ game(Player1, Player2, Board, CurrentTurn, [Player1, Player2, Board, CurrentTurn
 
 game_history([_, _, _, _, History], History).
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %RF13 - Comprobar si el juego termina en empate
 % isdraw(Game)
 is_draw([_, _, Board, _, _], true) :-
@@ -64,6 +69,8 @@ is_draw([Player1, Player2, _, _, _], true) :-
     player_remaining_pieces(Player1, 0),
     player_remaining_pieces(Player2, 0). % Ambos jugadores sin fichas
 is_draw(_, false).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % RF14 - Actualizar las estadísticas del jugador
 % Entrada:
@@ -98,6 +105,8 @@ increment_stat([ID, Name, Color, Wins, Losses, Draws, RemainingPieces], draws,
                [ID, Name, Color, Wins, Losses, NewDraws, RemainingPieces]) :-
     NewDraws is Draws + 1.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % RF15 - Obtener el jugador cuyo turno está en curso
 % Entrada:
 %   Game: Estado del juego
@@ -106,6 +115,8 @@ increment_stat([ID, Name, Color, Wins, Losses, Draws, RemainingPieces], draws,
 get_current_player([Player1, _, _, 1], Player1).  % Si el turno actual es 1, devuelve Player1
 get_current_player([_, Player2, _, 2], Player2). % Si el turno actual es 2, devuelve Player2
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % RF16 - Obtener el estado actual del tablero en el juego
 % Entrada:
 %   Game: Estructura del juego
@@ -113,6 +124,8 @@ get_current_player([_, Player2, _, 2], Player2). % Si el turno actual es 2, devu
 
 %   Board: Tablero actual
 game_get_board([_, _, Board, _, _], Board).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % RF17 - Finalizar el juego y actualizar estadísticas
 % Entrada:
@@ -131,18 +144,16 @@ end_game(Game, FinalGame) :-
         FinalGame = [UpdatedPlayer1, UpdatedPlayer2, Board, 0, []]
     ).
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % RF18 - Realizar movimiento
 player_play([Player1, Player2, Board, CurrentTurn, History], Player, Column, [UpdatedPlayer1, UpdatedPlayer2, NewBoard, NewTurn, NewHistory]) :-
-    % Verificar que sea el turno del jugador correcto
-    write('Turno actual: '), write(CurrentTurn), nl,
-    write('Jugador esperado: '), (CurrentTurn =:= 1 -> write(Player1) ; write(Player2)), nl,
-    write('Jugador actual: '), write(Player), nl,
-    ((CurrentTurn =:= 1, Player = Player1);
-     (CurrentTurn =:= 2, Player = Player2)),
-    write('player: '), write(Player), nl,
+    
     % Obtener la pieza del jugador
-    Player = [ID, _, Color, _, _, _, RemainingPieces],
-    write(RemainingPieces), nl,
+    Player = [ID, Name, Color, _, _, _, _],
+    (CurrentTurn =:= 1 -> Player1 = [_,_,_, Wins, Losses, Draws, RemainingPieces];
+     Player2 = [_,_,_, Wins, Losses, Draws, RemainingPieces]),
+
     RemainingPieces > 0, % Verificar que el jugador tenga fichas
     piece(Color, Piece),
 
@@ -152,22 +163,15 @@ player_play([Player1, Player2, Board, CurrentTurn, History], Player, Column, [Up
     % Reducir fichas del jugador
     UpdatedRemainingPieces is RemainingPieces - 1,
 
-    % Actualizar el historial
-    append(History, [[ID, Column]], NewHistory),
-    write('Nuevo historial: '), write(NewHistory), nl,
-
-    % Alternar el turno
-    NewTurn is 3 - CurrentTurn,
-    write(NewTurn), nl,
-
     % Actualizar los jugadores
-(CurrentTurn =:= 1 ->
-    Player1 = [ID1, Name1, Color1, Wins1, Losses1, Draws1, _],
-    UpdatedPlayer1 = [ID1, Name1, Color1, Wins1, Losses1, Draws1, UpdatedRemainingPieces],
-    UpdatedPlayer2 = Player2
-;
-    Player2 = [ID2, Name2, Color2, Wins2, Losses2, Draws2, _],
-    UpdatedPlayer2 = [ID2, Name2, Color2, Wins2, Losses2, Draws2, UpdatedRemainingPieces],
-    UpdatedPlayer1 = Player1
-),
-    write(Player1), nl, write(Player2), nl.
+    (CurrentTurn =:= 1 ->
+        NewTurn is 2,
+        UpdatedPlayer1 = [ID, Name, Color, Wins, Losses, Draws, UpdatedRemainingPieces],
+        UpdatedPlayer2 = Player2
+    ;
+        NewTurn is 1,
+        UpdatedPlayer2 = [ID, Name, Color, Wins, Losses, Draws, UpdatedRemainingPieces],
+        UpdatedPlayer1 = Player1
+    ),
+    % Actualizar el historial
+    append(History, [[ID, Column]], NewHistory).
