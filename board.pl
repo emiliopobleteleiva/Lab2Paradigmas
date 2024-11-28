@@ -5,9 +5,9 @@
           can_play/1,
           play_piece/4,
           print_board/1,
-          check_vertical/3,       % Verifica victorias verticales
-          check_horizontal/3,     % Verifica victorias horizontales
-          check_diagonal/3
+          check_vertical_win/2,       % Verifica victorias verticales
+          check_horizontal_win/2,     % Verifica victorias horizontales
+          check_diagonal_win/2
           ]).
 
 %funciones
@@ -25,6 +25,7 @@ board(Board) :-
 
 % RF05 - Predicado "can_play"
 % Verifica si es posible realizar una jugada en el tablero (si hay espacios vacíos)
+
 can_play(Board) :-
     member(Row, Board),
     member(empty, Row).
@@ -72,54 +73,105 @@ print_board([Row | Rest]) :-
     writeln(Row), % Imprime la fila actual
     print_board(Rest). % Llama recursivamente para las filas restantes
 
-% RF07 - Verificar victoria vertical
-check_vertical(Board, PlayerPiece, win) :-
-    transpose(Board, TransposedBoard),    % Convertimos columnas en filas
-    member(Column, TransposedBoard),     % Iteramos sobre cada columna
-    consecutive_four(Column, PlayerPiece). % Verificamos si hay 4 consecutivas.
+%funcion extraer elemento x
+%caso base
+elemento_x([H|_], 1, H).
 
-check_vertical(_, _, fail).               % Si no encontramos, devolvemos "fail".
+elemento_x([_|T], Iteracion, Elemento):-
+    Iteracion > 1,
+    NuevaIt is Iteracion - 1,
+    elemento_x(T, NuevaIt, Elemento).
+
+
+% RF07 - Verificar victoria vertical
+
+vertical_list([], _, []):- !.
+
+vertical_list([Fila|T2], Columna, [Elemento|NewList]):-
+    elemento_x(Fila, Columna, Elemento),
+    vertical_list(T2, Columna, NewList).
+
+check_vertical_win(Board, Winner) :-
+    check_vertical(Board, 1, Winner).
+
+check_vertical(_, 8, 0).
+    
+check_vertical(Board, Aux, Winner):-
+    vertical_list(Board, Aux, ListaColumna),
+    (consecutive_four(ListaColumna, Piece) -> Winner = Piece;
+        NewAux is Aux + 1, check_vertical(Board, NewAux, Winner)).
+    
 
 % RF08 - Verificar victoria horizontal
-check_horizontal(Board, PlayerPiece, win) :-
-    member(Row, Board),              % Iteramos sobre cada fila
-    consecutive_four(Row, PlayerPiece). % Verificamos si hay 4 consecutivas.
+check_horizontal_win([], 0).
 
-check_horizontal(_, _, fail).         % Si no encontramos, devolvemos "fail".
+check_horizontal_win([Fila|T], Winner):-
+    (consecutive_four(Fila, Piece) -> Winner = Piece;
+        check_horizontal_win(T, Winner)).
+    
 
 % RF09 - Verificar victoria diagonal
-check_diagonal(Board, PlayerPiece, win) :-
-    % Caso diagonal ascendente
-    findall(Diagonal, diagonal_ascending(Board, Diagonal), Diagonals),
-    member(Diagonal, Diagonals),
-    consecutive_four(Diagonal, PlayerPiece).
 
-check_diagonal(Board, PlayerPiece, win) :-
-    % Caso diagonal descendente
-    findall(Diagonal, diagonal_descending(Board, Diagonal), Diagonals),
-    member(Diagonal, Diagonals),
-    consecutive_four(Diagonal, PlayerPiece).
+diagonal_list_desc(_, _, 7, []):- !.
 
-check_diagonal(_, _, fail).
+diagonal_list_asc(_, 8, _, []):- !.
+
+diagonal_list_desc(_, 8, _, []):- !.
+
+diagonal_list_asc(_, _, 0, []):- !.
+
+diagonal_list_asc(Board, X, Y, [Elemento|NwList]):-
+    elemento_x(Board, Y, Fila),
+    elemento_x(Fila, X, Elemento),
+    NewX is X + 1, NewY is Y - 1,
+    diagonal_list_asc(Board, NewX, NewY, NwList).
+    
+diagonal_list_desc(Board, X, Y, [Elemento|NwList]):-
+    elemento_x(Board, Y, Fila),
+    elemento_x(Fila, X, Elemento),
+    NewX is X + 1, NewY is Y + 1,
+    diagonal_list_desc(Board, NewX, NewY, NwList).
+
+check_diagonal_asc(Board, Winner):-
+    check_diagonal_asc(Board, 1, 4, Winner).
+
+check_diagonal_asc(_, 5, 6, 0).
+
+check_diagonal_asc(Board, X, Y, Winner):-
+    diagonal_list_asc(Board, X, Y, NewList),
+    (consecutive_four(NewList, Piece) -> Winner = Piece;
+     (Y == 6 -> NewX is X + 1, check_diagonal_asc(Board, NewX, Y, Winner);
+     X == 1 -> NewY is Y + 1, check_diagonal_asc(Board, X, NewY, Winner))
+     ).
+
+check_diagonal_desc(Board, Winner):-
+    check_diagonal_desc(Board, 1, 3, Winner).
+
+check_diagonal_desc(_, 5, 1, 0).
+
+check_diagonal_desc(Board, X, Y, Winner):-
+    diagonal_list_desc(Board, X, Y, NewList),
+    (consecutive_four(NewList, Piece) -> Winner = Piece;
+     (Y == 1 -> NewX is X + 1, check_diagonal_desc(Board, NewX, Y, Winner);
+     X == 1 -> NewY is Y - 1, check_diagonal_desc(Board, X, NewY, Winner))
+     ).
+
+check_diagonal_win(Board, Winner) :-
+    (check_diagonal_asc(Board, AscWinner), AscWinner \= 0 ->
+        Winner = AscWinner;
+    check_diagonal_desc(Board, DescWinner), DescWinner \= 0 ->
+        Winner = DescWinner;
+    Winner = 0).
 
 % Auxiliar: Verifica si hay 4 consecutivos
-consecutive_four(List, PlayerPiece) :-
-    append(_, [PlayerPiece, PlayerPiece, PlayerPiece, PlayerPiece | _], List).
 
-% Auxiliar: Generar diagonales ascendentes
-diagonal_ascending(Board, Diagonal) :-
-    append(_, [Row1, Row2, Row3, Row4 | _], Board),
-    nth1(Col, Row1, P1),
-    ColNext1 is Col + 1, nth1(ColNext1, Row2, P2),
-    ColNext2 is Col + 2, nth1(ColNext2, Row3, P3),
-    ColNext3 is Col + 3, nth1(ColNext3, Row4, P4),
-    Diagonal = [P1, P2, P3, P4].
+find_player_color(Color, 1) :- player(1, _, Color, _, _, _, _, _).
+find_player_color(Color, 2) :- player(2, _, Color, _, _, _, _, _).
 
-% Auxiliar: Generar diagonales descendentes
-diagonal_descending(Board, Diagonal) :-
-    append(_, [Row1, Row2, Row3, Row4 | _], Board),
-    nth1(Col, Row1, P1),
-    ColNext1 is Col - 1, nth1(ColNext1, Row2, P2),
-    ColNext2 is Col - 2, nth1(ColNext2, Row3, P3),
-    ColNext3 is Col - 3, nth1(ColNext3, Row4, P4),
-    Diagonal = [P1, P2, P3, P4].
+%consecutive four
+consecutive_four([Piece, Piece, Piece, Piece|_], Winner):-
+    Piece \= empty,
+    find_player_color(Piece, Winner).
+
+consecutive_four([_ | T], Winner):-
+    consecutive_four(T, Winner).

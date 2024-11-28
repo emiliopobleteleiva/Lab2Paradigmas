@@ -4,7 +4,7 @@
     who_is_winner/2,
     game/5,
     game_history/2,
-    is_draw/2,
+    is_draw/1,
     update_stats/3,
     get_current_player/2,
     game_get_board/2,
@@ -20,21 +20,10 @@
 % Salida: Winner (1 si gana jugador 1, 2 si gana jugador 2, 0 si no hay ganador)
 
 who_is_winner(Board, Winner) :-
-    % Verificar si el jugador 1 tiene victoria
-    (   piece("red", Player1Piece),
-        (   check_vertical(Board, Player1Piece, win)
-        ;   check_horizontal(Board, Player1Piece, win)
-        ;   check_diagonal(Board, Player1Piece, win)
-        ) -> Winner = 1
-    ;   % Verificar si el jugador 2 tiene victoria
-        piece("yellow", Player2Piece),
-        (   check_vertical(Board, Player2Piece, win)
-        ;   check_horizontal(Board, Player2Piece, win)
-        ;   check_diagonal(Board, Player2Piece, win)
-        ) -> Winner = 2
-    ;   % Si no hay victorias
-        Winner = 0
-    ).
+    (check_vertical_win(Board, WinnerVer), WinnerVer \= 0 -> Winner = WinnerVer;
+        (check_horizontal_win(Board, WinnerHor), WinnerHor \= 0 -> Winner = WinnerHor;
+            (check_diagonal_win(Board, WinnerDiag), WinnerDiag \= 0 -> Winner = WinnerDiag;
+     Winner = 0))).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -63,12 +52,18 @@ game_history([_, _, _, _, History], History).
 
 %RF13 - Comprobar si el juego termina en empate
 % isdraw(Game)
-is_draw([_, _, Board, _, _], true) :-
-    \+ can_play(Board). % Tablero lleno
-is_draw([Player1, Player2, _, _, _], true) :-
-    player_remaining_pieces(Player1, 0),
-    player_remaining_pieces(Player2, 0). % Ambos jugadores sin fichas
-is_draw(_, false).
+
+is_draw([Player1, Player2, Board, _, _]) :-
+    (   \+ can_play(Board) -> true;
+        Player1 = [_, _, _, _, _, _, P1RemainingPieces],
+        Player2 = [_, _, _, _, _, _, P2RemainingPieces],
+        P1RemainingPieces =:= 0,
+        P2RemainingPieces =:= 0 -> true
+     ;
+     false
+    ).
+    
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -112,8 +107,10 @@ increment_stat([ID, Name, Color, Wins, Losses, Draws, RemainingPieces], draws,
 %   Game: Estado del juego
 % Salida:
 %   CurrentPlayer: Jugador cuyo turno está en curso
-get_current_player([Player1, _, _, 1], Player1).  % Si el turno actual es 1, devuelve Player1
-get_current_player([_, Player2, _, 2], Player2). % Si el turno actual es 2, devuelve Player2
+    
+
+get_current_player([Player1, _, _, 1, _], Player1). % Si el turno actual es 1, devuelve Player1
+get_current_player([_, Player2, _, 2, _], Player2). % Si el turno actual es 2, devuelve Player2
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
