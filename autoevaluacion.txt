@@ -1,0 +1,19 @@
+AutoEvaluación Emilio Poblete.
+
+RF02: TDA player - Crear jugador. Logro: 1.
+RF03: TDA piece - Crear una pieza. Logro: 1.
+RF04: TDA board - Crear un tablero. Logro: 1.
+RF05: can_play - Comprobar si se puede jugar. Logro: 1.
+RF06: play_piece - Colocar pieza en el tablero. Logro: 1.
+RF07: check_vertical_win - Comprobar victoria vertical. Logro: 0.75.
+RF08: check_horizontal_win - Comprobar victoria horizontal. Logro: 0.75.
+RF09: check_diagonal_win - Comprobar victoria diagonal. Logro: 0.75.
+RF10: who_is_winner - Determinar ganador. Logro: 0.75.
+RF11: TDA game - Crear una partida. Logro: 1.
+RF12: game_history - Devuelve el historial de la partida. Logro: 1.
+RF13: is_draw - Comprueba si hay un empate. Logro: 0.75.
+RF14: update_stats - Actualiza los datos del jugador finalizada una partida. Logro: 0.75.
+RF15: get_current_player - Devuelve el jugador actual. Logro: 1.
+RF16: game_get_board - Devuelve el tablero actual. Logro: 1.
+RF17: end_game - Finaliza un juego y actualiza los datos de los jugadores. Logro: 1.
+RF18: player_play - Realiza una jugada y actualiza los datos del jugador actual. Logro: 1.

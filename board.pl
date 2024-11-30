@@ -3,11 +3,14 @@
 %modulo de las funciones:
 :- module(board, [board/1,
           can_play/1,
+          bottom_column/2,
+          replace_with/4,
           play_piece/4,
           print_board/1,
           check_vertical_win/2,       % Verifica victorias verticales
           check_horizontal_win/2,     % Verifica victorias horizontales
-          check_diagonal_win/2
+          check_diagonal_win/2,
+          consecutive_four/2
           ]).
 
 %funciones
@@ -34,37 +37,35 @@ can_play(Board) :-
 % Coloca una ficha en la posición más baja disponible de una columna en el tablero
 % Caso base: Si la posición actual está vacía y es la última fila (más baja disponible), coloca la ficha.
 
-insert_piece_in_column([empty | Rest], Piece, [Piece | Rest]) :-
-    \+ member(empty, Rest).  % Asegúrate de que no haya más posiciones vacías debajo.
+bottom_column([H|T], Yout):-
+    bottom_column(T, H, 1, Yout).
 
-% Caso recursivo: Si la posición actual está ocupada o no es la última vacía, continúa con las filas superiores.
-insert_piece_in_column([Occupied | Rest], Piece, [Occupied | NewRest]) :-
-    insert_piece_in_column(Rest, Piece, NewRest).
+bottom_column([_|_],[H],_,_):-
+    write('Columna llena'), nl.
 
-play_piece_in_column([Col | OtherCols], 0, Piece, [NewCol | OtherCols]) :-
-    insert_piece_in_column(Col, Piece, NewCol).
-play_piece_in_column([Col | OtherCols], ColIndex, Piece, [Col | NewCols]) :-
-    ColIndex > 0,
-    NextColIndex is ColIndex - 1,
-    play_piece_in_column(OtherCols, NextColIndex, Piece, NewCols).
+bottom_column([empty|T], empty, Y, Yout):-
+    NewY is Y + 1,
+    bottom_column(T, empty, NewY, Yout).
 
-play_piece(Board, ColIndex, Piece, NewBoard) :-
-    transpose(Board, TransposedBoard),                 % Trabajar por columnas
-    play_piece_in_column(TransposedBoard, ColIndex, Piece, NewTransposedBoard),
-    transpose(NewTransposedBoard, NewBoard).           % Restaurar filas originales
+bottom_column([H|_], empty, Y, Y).
+bottom_column([], empty, Y , Y).
 
-% Transponer una matriz
-transpose([], []).
-transpose([F | Fs], Ts) :-
-    transpose_aux(F, [F | Fs], Ts).
 
-transpose_aux([], _, []).
-transpose_aux([_ | Rs], Rows, [Col | Cs]) :-
-    maplist(nth1(1), Rows, Col),
-    maplist(tail, Rows, RestRows),
-    transpose_aux(Rs, RestRows, Cs).
 
-tail([_|T], T).
+replace_with([_|T], 1, Elem, [Elem|T]).
+
+replace_with([H|T], X, Elem, [H|ListOut]):-
+    NewX is X - 1,
+    replace_with(T, NewX, Elem, ListOut).
+    
+
+play_piece(Board, Column, Piece, NewBoard):-
+    vertical_list(Board, Column, ListaColumna),
+    bottom_column(ListaColumna, Y),
+    elemento_x(Board, Y, Fila),
+    replace_with(Fila, Column, Piece, NewFila),
+    replace_with(Board, Y, NewFila, NewBoard).
+    
 
 % Imprime cada fila del tablero separada por un salto de línea
 
@@ -167,7 +168,7 @@ check_diagonal_win(Board, Winner) :-
 
 find_player_color(Color, 1) :- player(1, _, Color, _, _, _, _, _).
 find_player_color(Color, 2) :- player(2, _, Color, _, _, _, _, _).
-
+    
 %consecutive four
 consecutive_four([Piece, Piece, Piece, Piece|_], Winner):-
     Piece \= empty,

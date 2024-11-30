@@ -39,6 +39,7 @@ game_get_board(G11, CurrentBoard),
 write('¿Se puede jugar después de 11 movimientos? '),
 can_play(CurrentBoard),
 nl,
+print_board(CurrentBoard),
  write('Jugador actual después de 11 movimientos: '), !,
    get_current_player(G11, CurrentPlayer),
    write(CurrentPlayer),
@@ -64,7 +65,7 @@ nl,
    who_is_winner(CurrentBoard, Winner),
    write(Winner),
    nl,
-
+    
 % 8. Verificación de empate
    write('¿Es empate? '),
    is_draw(G11),
@@ -72,6 +73,7 @@ nl,
 
 % 9. Finalizar juego y actualizar estadísticas
    end_game(G11, EndedGame),
+    write(EndedGame), nl,
 
 % 10. Mostrar historial de movimientos
    write('Historial de movimientos: '),

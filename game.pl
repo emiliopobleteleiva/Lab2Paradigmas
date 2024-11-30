@@ -54,14 +54,11 @@ game_history([_, _, _, _, History], History).
 % isdraw(Game)
 
 is_draw([Player1, Player2, Board, _, _]) :-
-    (   \+ can_play(Board) -> true;
+        \+ can_play(Board);
         Player1 = [_, _, _, _, _, _, P1RemainingPieces],
         Player2 = [_, _, _, _, _, _, P2RemainingPieces],
         P1RemainingPieces =:= 0,
-        P2RemainingPieces =:= 0 -> true
-     ;
-     false
-    ).
+        P2RemainingPieces =:= 0.
     
 
 
@@ -73,32 +70,20 @@ is_draw([Player1, Player2, Board, _, _]) :-
 %   Player: Jugador a actualizar
 %   UpdatedPlayer: Estructura del jugador con estadísticas actualizadas
 
-update_stats([Player1, Player2, _, _, _], Player, UpdatedPlayer) :-
-    who_is_winner(_, Winner),
-    (   % Si el jugador es el ganador
-        Winner =:= 1, Player = Player1 -> increment_stat(Player, wins, UpdatedPlayer)
-    ;   Winner =:= 2, Player = Player2 -> increment_stat(Player, wins, UpdatedPlayer)
-    ;   % Si el jugador perdió
-        Winner =:= 1, Player = Player2 -> increment_stat(Player, losses, UpdatedPlayer)
-    ;   Winner =:= 2, Player = Player1 -> increment_stat(Player, losses, UpdatedPlayer)
-    ;   % Si es empate
-        Winner =:= 0 -> increment_stat(Player, draws, UpdatedPlayer)
-    ).
+update_stats([Player1, Player2, Board, _, _], Player, [ID, Name, Color, NewWins, NewLosses, NewDraws, NewRemainingPieces]):-
+    Player = [ID,Name,Color, _, _, _, _],
+    Player1 = [P1ID, _, _, P1Wins, P1Losses, P1Draws, P1RemainingPieces],
+    Player2 = [P2ID, _, _, P2Wins, P2Losses, P2Draws, P2RemainingPieces],
+    
+    who_is_winner(Board, Winner),
 
-% Incrementar estadísticas
-% Entrada:
-%   Player: Estructura del jugador
-%   Stat: Estatística que se va a incrementar
-%   UpdatedPlayer: Jugador con estadísticas actualizadas
-increment_stat([ID, Name, Color, Wins, Losses, Draws, RemainingPieces], wins,
-               [ID, Name, Color, NewWins, Losses, Draws, RemainingPieces]) :-
-    NewWins is Wins + 1.
-increment_stat([ID, Name, Color, Wins, Losses, Draws, RemainingPieces], losses,
-               [ID, Name, Color, Wins, NewLosses, Draws, RemainingPieces]) :-
-    NewLosses is Losses + 1.
-increment_stat([ID, Name, Color, Wins, Losses, Draws, RemainingPieces], draws,
-               [ID, Name, Color, Wins, Losses, NewDraws, RemainingPieces]) :-
-    NewDraws is Draws + 1.
+    (Winner =:= 1, ID = P1ID -> NewWins is P1Wins + 1, NewLosses is P1Losses, NewDraws is P1Draws, NewRemainingPieces is P1RemainingPieces;
+     Winner =:= 2, ID = P2ID -> NewWins is P2Wins + 1, NewLosses is P2Losses, NewDraws is P2Draws, NewRemainingPieces is P2RemainingPieces;
+     Winner =:= 1, ID = P2ID -> NewLosses is P1Losses + 1, NewWins is P1Wins, NewDraws is P1Draws, NewRemainingPieces is P1RemainingPieces;
+     Winner =:= 2, ID = P1ID -> NewLosses is P2Losses + 1, NewWins is P2Wins, NewDraws is P2Draws, NewRemainingPieces is P2RemainingPieces;
+     Winner =:= 0, ID = P1ID -> NewDraws is P1Draws + 1, NewWins is P1Wins, NewLosses is P1Losses, NewRemainingPieces is P1RemainingPieces;
+     Winner =:= 0, ID = P2ID -> NewDraws is P2Draws + 1, NewWins is P2Wins, NewLosses is P2Losses, NewRemainingPieces is P2RemainingPieces
+     ).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -130,22 +115,17 @@ game_get_board([_, _, Board, _, _], Board).
 % Salida:
 %   FinalGame: Estado del juego actualizado con estadísticas finales
 
-end_game(Game, FinalGame) :-
-    Game = [Player1, Player2, Board, _, _],
-    who_is_winner(Board, Winner),
-    (   Winner =:= 1 -> update_stats(Game, Player1, UpdatedPlayer1), FinalGame = [UpdatedPlayer1, Player2, Board, 0, []]
-    ;   Winner =:= 2 -> update_stats(Game, Player2, UpdatedPlayer2), FinalGame = [Player1, UpdatedPlayer2, Board, 0, []]
-    ;   is_draw(Game, Draw), Draw = true ->
-        update_stats(Game, Player1, UpdatedPlayer1),
-        update_stats(Game, Player2, UpdatedPlayer2),
-        FinalGame = [UpdatedPlayer1, UpdatedPlayer2, Board, 0, []]
-    ).
+end_game(Game, [P1Updated, P2Updated, Board, CurrentTurn, GameOut]) :-
+    Game = [Player1, Player2, Board, CurrentTurn, GameOut],
+    update_stats(Game, Player1, P1Updated),
+    update_stats(Game, Player2, P2Updated).
+    
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % RF18 - Realizar movimiento
-player_play([Player1, Player2, Board, CurrentTurn, History], Player, Column, [UpdatedPlayer1, UpdatedPlayer2, NewBoard, NewTurn, NewHistory]) :-
-    
+player_play([Player1, Player2, Board, CurrentTurn, History], Player, X, [UpdatedPlayer1, UpdatedPlayer2, NewBoard, NewTurn, NewHistory]) :-
+    Column is X + 1,
     % Obtener la pieza del jugador
     Player = [ID, Name, Color, _, _, _, _],
     (CurrentTurn =:= 1 -> Player1 = [_,_,_, Wins, Losses, Draws, RemainingPieces];
@@ -154,8 +134,10 @@ player_play([Player1, Player2, Board, CurrentTurn, History], Player, Column, [Up
     RemainingPieces > 0, % Verificar que el jugador tenga fichas
     piece(Color, Piece),
 
+
     % Colocar la pieza en el tablero
     play_piece(Board, Column, Piece, NewBoard),
+
 
     % Reducir fichas del jugador
     UpdatedRemainingPieces is RemainingPieces - 1,
